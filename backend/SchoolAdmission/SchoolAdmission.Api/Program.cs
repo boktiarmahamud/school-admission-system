@@ -16,6 +16,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<SeatCountService>();
 builder.Services.AddScoped<ClassService>();
+builder.Services.AddScoped<HoldService>();
+builder.Services.AddExceptionHandler<AppExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // API + OpenAPI
 builder.Services.AddControllers();
@@ -42,8 +45,9 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.MapOpenApi();   // always on, so the evaluator can import it from Docker too
+app.MapOpenApi();
 
+app.UseExceptionHandler();   // first, so it catches errors from everything below
 app.UseCors();
 app.MapControllers();
 

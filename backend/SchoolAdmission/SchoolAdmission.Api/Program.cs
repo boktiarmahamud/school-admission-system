@@ -1,10 +1,21 @@
+using Microsoft.EntityFrameworkCore;
+using SchoolAdmission.Api.Data;
 using SchoolAdmission.Api.Options;
+using SchoolAdmission.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Settings
 builder.Services.Configure<AdmissionOptions>(
     builder.Configuration.GetSection(AdmissionOptions.SectionName));
+
+// Database
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+builder.Services.AddScoped<SeatCountService>();
+builder.Services.AddScoped<ClassService>();
 
 // API + OpenAPI
 builder.Services.AddControllers();
@@ -23,6 +34,13 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+// Apply migrations on startup (creates the schema automatically, also in Docker)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
 
 app.MapOpenApi();   // always on, so the evaluator can import it from Docker too
 
